@@ -24,6 +24,21 @@
 </section>
 
 <section>
+  <h2>From LinkedIn <span class="count">turn LinkedIn jobs into companies OpenCareer tracks</span></h2>
+  <p>Copy a LinkedIn job alert email, or just type company names (one per line), and paste it here.
+     OpenCareer finds each company's <b>own</b> job board (Greenhouse, Lever or Ashby) and tracks all its jobs from then on,
+     with the real deadlines. It never visits LinkedIn.</p>
+  <form method="post" action="/boards/find"
+        onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Finding their job boards… ~30 sec';">
+    <textarea name="text" rows="6" required placeholder="Paste a LinkedIn job alert email here, or company names like:&#10;Datadog&#10;Plaid&#10;Palo Alto Networks"
+              style="width:100%;font:13px/1.5 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:8px;padding:10px"></textarea>
+    <p><button type="submit">Find their job boards</button>
+       <span class="muted">A plain list of names is used as-is. A whole alert email is read by Claude to pick out the company
+       names (email addresses are removed first).</span></p>
+  </form>
+</section>
+
+<section>
   <h2>Add a company</h2>
   <p>Easiest: open any job posting from the company and <b>paste its link</b>. Greenhouse, Lever, and Ashby links are recognized automatically.</p>
   <form method="post" action="/boards" class="inline">

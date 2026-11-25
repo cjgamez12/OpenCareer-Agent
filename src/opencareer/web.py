@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
-from opencareer import applicant, autopilot, github, locations, pipeline, settings, storage, tailor, tracker
+from opencareer import applicant, autopilot, finder, github, locations, pipeline, settings, storage, tailor, tracker
 from opencareer import apply as assisted_apply
 from opencareer import boards as board_registry
 from opencareer.ai import AIError
@@ -310,6 +310,51 @@ def create_app(db_path: str | None = None, boards: dict | None = None,
                          "Try pasting a link to one of its job postings instead.", to="/companies")
         return _back(f"Added {name}: {stats['fetched']} open jobs, {stats['selected']} match you.",
                      to=f"/company/{quote(key)}")
+
+    @app.post("/boards/find")
+    def find_boards(text: str = Form(""), conn=Depends(get_conn)):
+        """Companies from a LinkedIn alert (or a list of names) -> their own job boards, tracked from now on."""
+        try:
+            companies = finder.companies_from_text(text, client=ai_client)
+        except finder.FinderError as error:
+            return _back(str(error), to="/companies")
+        tracked = {name.lower() for name in board_registry.all_boards(conn, default_boards).values()}
+        added, already, missing = {}, [], []
+        for source, name in finder.board_links(text):
+            try:
+                key = board_registry.add_board(conn, name, name.replace("-", " ").title(), source)
+            except ValueError:
+                missing.append(name)
+                continue
+            added[key] = board_registry.all_boards(conn, default_boards)[key]
+        for company in companies:
+            if company.lower() in tracked:
+                already.append(company)
+                continue
+            found = finder.find_board(company)
+            if not found:
+                missing.append(company)
+                continue
+            source, slug, _ = found
+            key = board_registry.add_board(conn, slug, company, source)
+            added[key] = company
+        if not (added or already or missing):
+            return _back("No company names found in what you pasted.", to="/companies")
+        parts = []
+        if added:
+            stats = pipeline.run(conn, added)
+            for key in stats["errors"]:                     # a pasted link to a board that doesn't exist
+                board_registry.remove_board(conn, key, added[key])
+                missing.append(added.pop(key))
+        if added:
+            labels = [f"{name} ({registry.LABELS[registry.split_key(key)[0]]})" for key, name in added.items()]
+            parts.append(f"Now tracking {', '.join(labels)}: {stats['selected']} jobs match you.")
+        if already:
+            parts.append(f"Already tracking: {', '.join(already)}.")
+        if missing:
+            parts.append(f"No public job board found for {', '.join(missing)}. They may use Workday or LinkedIn Easy Apply. "
+                         "On LinkedIn, click Apply: if it opens a Greenhouse, Lever or Ashby page, paste that link here.")
+        return _back(" ".join(parts), to="/companies")
 
     @app.post("/boards/remove")
     def remove_board(token: str = Form(...), conn=Depends(get_conn)):

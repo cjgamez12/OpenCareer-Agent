@@ -162,7 +162,7 @@ This opens the dashboard at http://127.0.0.1:8000. Pages update by themselves wh
 | Page | What it's for |
 |---|---|
 | **Dashboard** | Ranked jobs, search, **Refresh jobs**, target locations, new-grad mode, autopilot controls |
-| **Companies** | Add or remove boards (Greenhouse, Lever, Ashby); see each company's open roles and suggestions |
+| **Companies** | Add or remove boards (Greenhouse, Lever, Ashby); paste a LinkedIn job alert to track those companies' own boards; see each company's open roles |
 | **Job / draft** | Tailor, edit the resume and cover letter, export PDFs, **Prepare application** |
 | **History** | Everything you've applied to and where it stands |
 | **Profile** | Edit `profile.yaml`; let Claude draft it from your resumes |
@@ -199,6 +199,7 @@ Your data stays on your computer.
   - for a dropdown: the question, its choices, your resume facts, the names of your target locations, and your own saved answer to that same question if you have one (like how you heard about the job), so it can match the company's wording. No name or contact info.
 
   Claude never sees your address, your demographics or your other application answers.
+- **From LinkedIn** never visits LinkedIn. A pasted alert email goes to Claude only to pick out company names, with email addresses removed first.
 - **The GitHub page** reads only your *public* repos. Claude sees their READMEs and the projects already in your profile.
 - **What job sources see.** Fetching jobs sends nothing about you. Your information goes only to the company whose form you submit.
 - **Turning Claude off for dropdowns.** Add `OPENCAREER_AI_PICKS=0` to `.env`.
@@ -299,6 +300,7 @@ src/opencareer/
   boards.py        the companies you follow
   applicant.py     profile and resumes; what's private
   github.py        public repos → project entries you approve
+  finder.py        LinkedIn alerts / company names → their own job boards
   tailor.py        tailored resume and cover letter
   documents.py     PDFs
   apply.py         assisted apply: read the form, fill, highlight, remember, never submit
