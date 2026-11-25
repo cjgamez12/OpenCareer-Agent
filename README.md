@@ -161,7 +161,7 @@ This opens the dashboard at http://127.0.0.1:8000. Pages update by themselves wh
 
 | Page | What it's for |
 |---|---|
-| **Dashboard** | Ranked jobs, search, **Refresh jobs**, target locations, new-grad mode, autopilot controls |
+| **Dashboard** | A flow chart of your whole job search (applied → interview rounds → offer, rejected, ghosted…) that grows as you apply; ranked jobs, search, **Refresh jobs**, target locations, new-grad mode, autopilot controls |
 | **Companies** | Add or remove boards (Greenhouse, Lever, Ashby); paste a LinkedIn job alert to track those companies' own boards; see each company's open roles |
 | **Job / draft** | Tailor, edit the resume and cover letter, export PDFs, **Prepare application** |
 | **History** | Everything you've applied to and where it stands |
@@ -296,6 +296,7 @@ src/opencareer/
   pipeline.py      fetch → filter → save → rank; federal grade rules; new-grad mode
   storage.py       SQLite storage and dedupe
   tracker.py       application status and follow-ups
+  journey.py       the job-search flow chart (Sankey), drawn as plain SVG
   locations.py     target locations
   boards.py        the companies you follow
   applicant.py     profile and resumes; what's private

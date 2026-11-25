@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
-from opencareer import applicant, autopilot, finder, github, locations, pipeline, settings, storage, tailor, tracker
+from opencareer import applicant, autopilot, finder, github, journey, locations, pipeline, settings, storage, tailor, tracker
 from opencareer import apply as assisted_apply
 from opencareer import boards as board_registry
 from opencareer.ai import AIError
@@ -181,6 +181,8 @@ def create_app(db_path: str | None = None, boards: dict | None = None,
             {"url": url, "stage": stage, "follow_up_on": follow_up_on, "job": jobs_by_url.get(url)}
             for url, stage, follow_up_on in tracker.due_follow_ups(conn, today)
         ]
+        links = journey.flows(conn)
+        journey_svg = Markup(journey.sankey_svg(links) or "")
         status_counts = {}
         for row in applications:
             status_counts[row["status"]] = status_counts.get(row["status"], 0) + 1
@@ -198,7 +200,7 @@ def create_app(db_path: str | None = None, boards: dict | None = None,
             "applications": applications, "due": due, "status_counts": status_counts,
             "categories": CATEGORIES, "category": category, "hide_interns": hide_interns,
             "only_targets": only_targets, "targets": targets, "target_of": target_of, "q": q,
-            "stages": tracker.STAGES,
+            "stages": tracker.STAGES, "journey_svg": journey_svg, "journey_headline": journey.headline(links),
             "boards": board_registry.all_boards(conn, default_boards),
             "has_profile": applicant.read_profile_text(profile_dir) is not None,
             "new_grad": new_grad,

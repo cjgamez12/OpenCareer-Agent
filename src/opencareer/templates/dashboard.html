@@ -67,6 +67,13 @@
 </section>
 
 <section>
+  <h2>Your job search <span class="count">{{ journey_headline or "grows with every application" }}</span></h2>
+  {% if journey_svg %}{{ journey_svg }}
+  <p class="muted">Each application flows to where it stands now. Update a status below (interview round, offer, rejected, ghosted…) and the chart grows. Hover a band for its count.</p>
+  {% else %}<p class="empty">Your flow chart appears here after your first application.</p>{% endif %}
+</section>
+
+<section>
   <h2>My applications <span class="count">{{ applications|length }}</span></h2>
   {% if status_counts %}
   <div class="pills" style="margin-bottom:12px">
