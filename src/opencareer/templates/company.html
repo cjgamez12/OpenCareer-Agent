@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>{{ company }} <span class="count">{{ source_label(token) }} · {{ total }} open roles · {{ suggested|length }} suggested for you{% if new %} · {{ new }} new{% endif %}</span></h2>
+  <form method="get" action="/company/{{ token|urlencode }}" class="filters">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search {{ company }} roles" aria-label="Search" style="min-width:280px">
+    <button type="submit" class="secondary">Search</button>
+    {% if q %}<a href="/company/{{ token|urlencode }}">Clear</a>{% endif %}
+    <a href="/companies" style="margin-left:auto">All companies</a>
+  </form>
+</section>
+
+<section>
+  <h2>Suggested for you <span class="count">entry-level · your fields · ranked</span></h2>
+  {% if suggested %}
+  <table>
+    <tr><th>Score</th><th>Role</th><th>Location</th><th></th></tr>
+    {% for score, job in suggested %}
+    <tr>
+      <td class="score">{{ score }}</td>
+      <td><a href="{{ job.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ job.title }}</a>
+        <div><span class="tag {{ job.tags[0] }}">{{ job.tags[0] }}</span>{% if grade_of(job) %} <span class="tag grade">{{ grade_of(job) }}</span>{% endif %}{% if recent_grads(job) %} <span class="tag target">Recent Graduates</span>{% endif %}</div></td>
+      <td class="muted">{{ job.location or "" }}{% if job.url in target_of %}<div><span class="tag target">★ {{ target_of[job.url] }}</span></div>{% endif %}</td>
+      <td>
+        <div class="actions">
+        {% if job.url in applied %}
+          <span class="status applied">applied ✓</span>
+        {% else %}
+          {% if job.url in drafted %}
+          <a class="button-link" href="/draft?url={{ job.url|urlencode }}">View draft</a>
+          {% else %}
+          <form method="post" action="/tailor" class="inline" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Tailoring… ~30s';">
+            <input type="hidden" name="url" value="{{ job.url }}">
+            <button type="submit">Tailor</button>
+          </form>
+          {% endif %}
+          <form method="post" action="/apply" class="inline">
+            <input type="hidden" name="url" value="{{ job.url }}">
+            <input type="hidden" name="back" value="/company/{{ token|urlencode }}">
+            <button type="submit" class="secondary" title="Click this only after you've submitted the application">I applied</button>
+          </form>
+        {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No entry-level roles in your fields right now{% if q %} matching "{{ q }}"{% endif %}.</p>{% endif %}
+</section>
+
+<section>
+  <details>
+    <summary><b>All other open roles</b> <span class="muted">({{ others|length }}) · filtered out, with the reason</span></summary>
+    <table style="margin-top:10px">
+      <tr><th>Role</th><th>Location</th><th>Why it's not suggested</th></tr>
+      {% for job, reason in others %}
+      <tr>
+        <td><a href="{{ job.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ job.title }}</a></td>
+        <td class="muted">{{ job.location or "" }}</td>
+        <td class="muted">{{ reason }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </details>
+</section>
+{% endblock %}

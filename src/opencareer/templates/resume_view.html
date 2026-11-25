@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>{{ name }} <span class="count">{% for u in uses %}<span class="tag {{ u }}">{{ u }}</span> {% endfor %}</span></h2>
+  <p><a href="/resumes">All resumes</a> · <a href="/resumes/file?name={{ name|urlencode }}" target="_blank">Open PDF in a new tab</a></p>
+</section>
+
+<div class="grid">
+  <section>
+    <h2>Resume</h2>
+    {% if is_pdf %}<iframe class="pdf" src="/resumes/file?name={{ name|urlencode }}" title="{{ name }}"></iframe>
+    {% else %}<pre class="plain">{{ text }}</pre>{% endif %}
+  </section>
+  <section>
+    <h2>AI suggestions</h2>
+    {% if feedback %}
+      <div class="doc" style="max-height:none">{{ feedback|markdown }}</div>
+      <p class="muted">Suggestions only: your resume file isn't changed. Make edits in your own copy (Google Docs, Word…).</p>
+    {% else %}
+      <p class="muted">Get a recruiter-style review: top fixes, stronger bullet wording (using only your real facts), inconsistencies, and placeholders to remove. About 3–4 cents.</p>
+    {% endif %}
+    <form method="post" action="/resumes/feedback" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Reviewing… ~30s';">
+      <input type="hidden" name="name" value="{{ name }}">
+      <button type="submit">{{ "Review again" if feedback else "Get AI suggestions" }}</button>
+    </form>
+    <details style="margin-top:14px"><summary class="muted">Text the AI reads from this file</summary><pre class="plain">{{ text }}</pre></details>
+  </section>
+</div>
+{% endblock %}

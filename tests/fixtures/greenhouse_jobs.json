@@ -1,0 +1,32 @@
+{
+  "jobs": [
+    {
+      "id": 1001,
+      "title": "Software Engineer I",
+      "company_name": "Example Corp",
+      "absolute_url": "https://boards.greenhouse.io/examplecorp/jobs/1001",
+      "location": {"name": "Remote - US"},
+      "updated_at": "2026-11-10T09:00:00-05:00",
+      "first_published": "2026-11-01T09:00:00-05:00",
+      "application_deadline": "2026-12-15"
+    },
+    {
+      "id": 1002,
+      "title": "Senior Security Engineer",
+      "company_name": "Example Corp",
+      "absolute_url": "https://boards.greenhouse.io/examplecorp/jobs/1002",
+      "location": {"name": "Austin, TX"},
+      "updated_at": "2026-11-05T12:00:00-05:00",
+      "first_published": "2026-10-20T12:00:00-05:00",
+      "application_deadline": null
+    },
+    {
+      "id": 1003,
+      "title": "IT Support Specialist",
+      "absolute_url": "https://boards.greenhouse.io/examplecorp/jobs/1003",
+      "location": null,
+      "updated_at": "2026-11-12T08:00:00-05:00"
+    }
+  ],
+  "meta": {"total": 3}
+}

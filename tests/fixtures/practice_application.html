@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><body>
+<h1>Apply for Software Engineer</h1>
+<form id="application" onsubmit="window.__submitted = true; return false;">
+  <div class="field"><label for="first_name">First Name *</label><input id="first_name" required></div>
+  <div class="field"><label for="last_name">Last Name *</label><input id="last_name" required></div>
+  <div class="field"><label for="email">Email *</label><input id="email" type="email" required></div>
+  <div class="field"><label for="phone">Phone</label><input id="phone" type="tel"></div>
+  <div class="field"><label for="addr">Address *</label><input id="addr" required></div>
+  <div class="field"><label for="city">City *</label><input id="city" required></div>
+  <div class="field"><label for="state">State *</label>
+    <select id="state" required><option value="">Select...</option><option>AZ</option><option>CA</option><option>NV</option></select></div>
+  <div class="field"><label for="zip">ZIP Code *</label><input id="zip" required></div>
+  <div class="field"><label for="country">Country *</label>
+    <select id="country" required><option value="">Select...</option><option>Canada</option><option>United States</option><option>United States Minor Outlying Islands</option></select></div>
+  <div class="field"><label for="statement">Please state in a few sentences why you are interested in this role</label><textarea id="statement"></textarea></div>
+  <div class="field"><label for="resume">Resume/CV *</label><input id="resume" type="file" required></div>
+  <div class="field"><label for="cover_letter">Cover Letter</label><input id="cover_letter" type="file"></div>
+  <div class="field"><label for="linkedin">LinkedIn Profile</label><input id="linkedin"></div>
+  <div class="field"><label for="auth">Are you legally authorized to work in the United States? *</label>
+    <select id="auth" required><option value="">Select...</option><option value="1">Yes</option><option value="0">No</option></select></div>
+  <div class="field"><label for="sponsor">Will you now or in the future require sponsorship for employment visa status? *</label>
+    <select id="sponsor" required><option value="">Select...</option><option value="1">Yes</option><option value="0">No</option></select></div>
+  <div class="field"><label for="heard">How did you hear about this job?</label><input id="heard"></div>
+  <div class="field"><label for="salary">Desired salary</label><input id="salary"></div>
+  <div class="field"><label for="why">Why do you want to work here? *</label><textarea id="why" required></textarea></div>
+  <div class="field"><label for="gender">Gender</label>
+    <select id="gender"><option value="">Select...</option><option>Male</option><option>Female</option><option>Decline To Self Identify</option></select></div>
+  <fieldset class="field"><legend>Veteran Status</legend>
+    <label><input type="radio" name="vet" value="1"> I am a protected veteran</label>
+    <label><input type="radio" name="vet" value="0"> I am not a protected veteran</label>
+    <label><input type="radio" name="vet" value="2"> I don't wish to answer</label>
+  </fieldset>
+  <button type="submit" id="submit">Submit Application</button>
+</form>
+</body></html>

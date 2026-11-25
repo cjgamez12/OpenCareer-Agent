@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>{% if job %}{{ job.title }} <span class="count">{{ job.company }}</span>{% else %}Application history{% endif %}</h2>
+  <p><a href="{{ url|safe_url }}" target="_blank" rel="noopener noreferrer">Open the job posting</a> · <a href="/">Back to dashboard</a></p>
+  {% if events %}
+  <table>
+    <tr><th>Date</th><th>Step</th><th>Round</th><th>Note</th></tr>
+    {% for happened_on, stage, rnd, note in events %}
+    <tr>
+      <td>{{ happened_on }}</td>
+      <td class="status {{ stage }}">{{ stage.replace('_', ' ') }}</td>
+      <td>{{ rnd or "" }}</td>
+      <td>{{ note }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No history recorded for this job.</p>{% endif %}
+</section>
+{% endblock %}

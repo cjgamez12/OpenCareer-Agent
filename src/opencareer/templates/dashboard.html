@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block content %}
+{% if not has_profile %}
+<div class="warn"><b>Set up your profile to use Tailor.</b> It takes a minute: <a href="/profile">go to the Profile page</a>.</div>
+{% endif %}
+
+<section>
+  <h2>Ready for review <span class="count">{{ ready|length }} drafted by autopilot</span>
+    <span style="margin-left:auto; display:flex; gap:8px; align-items:center">
+      <span class="muted">Autopilot: {% if autopilot_time %}<b class="ok">daily at {{ autopilot_time }}</b>, {{ autopilot_count }} per day{% else %}<b>off</b>{% endif %}</span>
+    </span>
+  </h2>
+  {% if ready %}
+  <table>
+    <tr><th>Job</th><th>Category</th><th>Location</th><th></th></tr>
+    {% for job in ready %}
+    <tr>
+      <td><a href="/draft?url={{ job.url|urlencode }}"><b>{{ job.title }}</b></a><div class="muted">{{ job.company }}</div></td>
+      <td><span class="tag {{ (job.tags or ['software'])[0] }}">{{ (job.tags or ['software'])[0] }}</span></td>
+      <td class="muted">{{ job.location or "" }}</td>
+      <td><div class="actions"><a class="button-link" href="/draft?url={{ job.url|urlencode }}">Review &amp; prepare</a></div></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="empty">Nothing waiting. {% if autopilot_last %}Last run {{ autopilot_last.ran_at.replace("T", " ") }}: {{ autopilot_last.new }} new jobs, {{ autopilot_last.tailored|length }} tailored.{% endif %}</p>
+  {% endif %}
+  {% if autopilot_last and autopilot_last.errors %}
+  <div class="warn"><b>Last run had problems:</b><ul>{% for e in autopilot_last.errors[:5] %}<li>{{ e }}</li>{% endfor %}</ul></div>
+  {% endif %}
+  <div class="filters" style="margin-top:12px">
+    {% if autopilot_time %}
+    <form method="post" action="/autopilot/schedule" class="inline">
+      <input type="hidden" name="on" value="0"><button type="submit" class="secondary">Turn off daily autopilot</button>
+    </form>
+    {% else %}
+    <form method="post" action="/autopilot/schedule" class="inline">
+      <input type="hidden" name="on" value="1">
+      <span class="muted">Every day at</span>
+      <select name="hour" aria-label="Hour">{% for hr in range(5, 23) %}<option value="{{ hr }}" {% if hr == 12 %}selected{% endif %}>{{ "%d:00 %s"|format(hr if hr <= 12 else hr - 12, "AM" if hr < 12 else "PM") }}</option>{% endfor %}</select>
+      <span class="muted">tailor the top</span>
+      <select name="count" aria-label="How many">{% for c in [3, 5, 10] %}<option {% if c == autopilot_count %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+      <button type="submit">Turn on daily autopilot</button>
+    </form>
+    {% endif %}
+    <form method="post" action="/autopilot/run" class="inline" onsubmit="this.querySelector('button').disabled=true;">
+      <button type="submit" class="secondary" title="Find new jobs and tailor the top ones right now">Run now</button>
+    </form>
+  </div>
+</section>
+
+<section>
+  <h2>Follow-ups due <span class="count">{{ due|length }}</span></h2>
+  {% if due %}
+  <table>
+    <tr><th>Due</th><th>Job</th><th>Last step</th><th></th></tr>
+    {% for item in due %}
+    <tr>
+      <td>{{ item.follow_up_on }}</td>
+      <td>{% if item.job %}{{ item.job.title }} <span class="muted">· {{ item.job.company }}</span>{% else %}<span class="muted">{{ item.url }}</span>{% endif %}</td>
+      <td class="status {{ item.stage }}">{{ item.stage.replace('_', ' ') }}</td>
+      <td><a href="/history?url={{ item.url|urlencode }}">History</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">Nothing due. You're caught up.</p>{% endif %}
+</section>
+
+<section>
+  <h2>My applications <span class="count">{{ applications|length }}</span></h2>
+  {% if status_counts %}
+  <div class="pills" style="margin-bottom:12px">
+    {% for stage in stages if stage in status_counts %}
+      <span class="pill"><span class="status {{ stage }}">{{ stage.replace('_', ' ') }}</span> · {{ status_counts[stage] }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if applications %}
+  <table>
+    <tr><th>Applied</th><th>Job</th><th>Status</th><th>Record next step</th><th></th></tr>
+    {% for app in applications %}
+    <tr>
+      <td>{{ app.applied_on }}</td>
+      <td>
+        {% if app.job %}<a href="{{ app.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ app.job.title }}</a>
+        <div class="muted">{{ app.job.company }}{% if app.job.location %} · {{ app.job.location }}{% endif %}</div>
+        {% else %}<a href="{{ app.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ app.url }}</a>{% endif %}
+      </td>
+      <td class="status {{ app.status }}">{{ app.status.replace('_', ' ') }}</td>
+      <td>
+        <form method="post" action="/update" class="inline">
+          <input type="hidden" name="url" value="{{ app.url }}">
+          <select name="stage" aria-label="Stage">
+            {% for stage in stages %}<option value="{{ stage }}" {% if stage == app.status %}selected{% endif %}>{{ stage.replace('_', ' ') }}</option>{% endfor %}
+          </select>
+          <input type="number" name="round_number" min="1" placeholder="round" aria-label="Interview round">
+          <input type="text" name="note" placeholder="note" aria-label="Note">
+          <input type="date" name="follow_up" title="Custom follow-up date (optional)" aria-label="Follow-up date">
+          <button type="submit">Save</button>
+        </form>
+      </td>
+      <td><a href="/history?url={{ app.url|urlencode }}">History</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No applications yet. Mark one as applied from the list below after you submit it.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Top matches <span class="count">showing {{ ranked|length }} of {{ total_matches }}</span>
+    <form method="post" action="/settings/new-grad" class="inline" style="margin-left:auto">
+      <input type="hidden" name="on" value="{{ '0' if new_grad else '1' }}">
+      <span class="muted">New-grad mode: <b class="{{ 'ok' if new_grad else '' }}">{{ "on" if new_grad else "off" }}</b></span>
+      <button type="submit" class="secondary" title="On: new-grad and early-career roles rank higher, internships lower">{{ "Turn off" if new_grad else "Turn on" }}</button>
+    </form>
+  </h2>
+  <form method="get" action="/" class="filters">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search title, company, or location" aria-label="Search" style="min-width:280px">
+    <select name="category" aria-label="Category">
+      <option value="">All categories</option>
+      {% for c in categories %}<option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+    <label><input type="checkbox" name="only_targets" value="true" {% if only_targets %}checked{% endif %}> Only my target locations</label>
+    <label><input type="checkbox" name="hide_interns" value="true" {% if hide_interns %}checked{% endif %}> Hide internships</label>
+    <button type="submit" class="secondary">Search</button>
+    {% if q or category or hide_interns or only_targets %}<a href="/">Clear</a>{% endif %}
+  </form>
+  {% if ranked %}
+  <table>
+    <tr><th>Score</th><th>Job</th><th>Category</th><th>Location</th><th></th></tr>
+    {% for score, job in ranked %}
+    <tr>
+      <td class="score">{{ score }}</td>
+      <td><a href="{{ job.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ job.title }}</a>
+        <div class="muted">{{ job.company }}{% if job.deadline %} · deadline {{ job.deadline }}{% endif %}</div></td>
+      <td><span class="tag {{ job.tags[0] }}">{{ job.tags[0] }}</span>{% if grade_of(job) %} <span class="tag grade">{{ grade_of(job) }}</span>{% endif %}{% if recent_grads(job) %} <span class="tag target">Recent Graduates</span>{% endif %}</td>
+      <td class="muted">{{ job.location or "" }}{% if job.url in target_of %}<div><span class="tag target">★ {{ target_of[job.url] }}</span></div>{% endif %}</td>
+      <td>
+        <div class="actions">
+          {% if job.url in drafted %}
+          <a class="button-link" href="/draft?url={{ job.url|urlencode }}">View draft</a>
+          {% else %}
+          <form method="post" action="/tailor" class="inline" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Tailoring… ~30s';">
+            <input type="hidden" name="url" value="{{ job.url }}">
+            <button type="submit" title="Draft a tailored resume and cover letter with Claude">Tailor</button>
+          </form>
+          {% endif %}
+          <form method="post" action="/apply" class="inline">
+            <input type="hidden" name="url" value="{{ job.url }}">
+            <button type="submit" class="secondary" title="Click this only after you've submitted the application">I applied</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">{% if q %}No matches for "{{ q }}".{% else %}No matches yet. Click "Find new jobs" at the top.{% endif %}</p>{% endif %}
+</section>
+
+<section>
+  <h2>Target locations <span class="count">jobs here get bonus points</span></h2>
+  {% if targets %}
+  <table>
+    <tr><th>Target</th><th>Matches locations containing</th><th>Bonus</th><th></th></tr>
+    {% for t in targets %}
+    <tr>
+      <td><b>{{ t.name }}</b></td>
+      <td class="muted">{{ t.keywords|join(" · ") }}</td>
+      <td>+{{ t.points }}</td>
+      <td>
+        <form method="post" action="/locations/delete" class="inline">
+          <input type="hidden" name="target_id" value="{{ t.id }}">
+          <button type="submit" class="secondary">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="empty">No targets: every location ranks the same.</p>{% endif %}
+  <form method="post" action="/locations" class="inline" style="margin-top:12px">
+    <input type="text" name="name" placeholder="Name, e.g. Seattle" required aria-label="Target name">
+    <input type="text" name="keywords" placeholder="keywords, e.g. seattle, bellevue, redmond" style="min-width:300px" aria-label="Keywords">
+    <input type="number" name="points" value="20" min="0" max="100" aria-label="Bonus points">
+    <button type="submit">Add target</button>
+  </form>
+  <p class="muted">Keywords are matched against the job's location, separated by commas. Leave them empty to match the name itself. Jobs listed only as "Hybrid" or "In-Office" can't be matched.</p>
+</section>
+
+<section>
+  <h2>Companies you're searching <span class="count">{{ boards|length }} · click one to see all its open roles</span></h2>
+  <div class="pills">
+    {% for key, company in boards.items() %}<a class="pill" href="/company/{{ key|urlencode }}">{{ company }}</a>{% endfor %}
+    <a class="pill" href="/companies">+ Add or remove</a>
+  </div>
+</section>
+
+{% endblock %}

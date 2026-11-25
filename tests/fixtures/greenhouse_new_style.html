@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><body>
+<!-- Mimics Greenhouse's new application form: searchable dropdowns (role=combobox + role=option),
+     hidden "required" helper inputs, a file input hidden behind an "Attach" button, employment section. -->
+<form id="app">
+  <div class="field"><label for="first_name">First Name*</label><input id="first_name" required></div>
+  <div class="field"><label for="last_name">Last Name*</label><input id="last_name" required></div>
+  <div class="field"><label for="email">Email*</label><input id="email" required></div>
+
+  <div class="field"><label id="resume-label">Resume/CV*</label>
+    <button type="button" onclick="document.getElementById('resume').click()">Attach</button>
+    <input type="file" id="resume" style="display:none">
+  </div>
+
+  <h3>Employment</h3>
+  <div class="field"><label for="company">Company name*</label><input id="company" required></div>
+  <div class="field"><label for="title">Title*</label><input id="title" required></div>
+  <div class="field"><label id="sm-label">Start date month*</label>
+    <input role="combobox" aria-labelledby="sm-label" id="start_month" data-options="January,February,March,April,May,June,July,August,September,October,November,December">
+    <input aria-hidden="true" tabindex="-1" required style="opacity:0;width:1px">
+  </div>
+  <div class="field"><label for="start_year">Start date year*</label><input id="start_year" maxlength="4" required></div>
+
+  <h3>Education</h3>
+  <div class="field"><label id="school-label">School*</label>
+    <input role="combobox" aria-labelledby="school-label" id="school" data-delay="1500" data-search="berkeley" data-options="University of California - Davis,University of California - Berkeley,Santa Clara University">
+    <input aria-hidden="true" tabindex="-1" required style="opacity:0;width:1px">
+  </div>
+  <div class="field"><label id="degree-label">Degree*</label>
+    <input role="combobox" aria-labelledby="degree-label" id="degree" data-options="High School,Associate's Degree,Bachelor's Degree,Master's Degree">
+  </div>
+
+  <div class="field"><label id="disc-label">Discipline*</label>
+    <input role="combobox" aria-labelledby="disc-label" id="discipline" data-min="2" data-options="Computer Science,Computer Engineering,Data Science,Information Technology,Computer Networking,Digital Media,Other">
+  </div>
+  <div class="field"><label for="heard">How did you hear about this job?*</label>
+    <select id="heard" required><option value=""></option><option value="0">Select...</option>
+      <option value="1">Acme careers site</option><option value="2">LinkedIn</option><option value="3">Referral</option></select>
+  </div>
+  <fieldset class="field"><legend>What type of opportunity are you interested in?*</legend>
+    <label><input type="radio" name="opp" value="intern" required> Internship</label>
+    <label><input type="radio" name="opp" value="ft"> Full-time</label>
+  </fieldset>
+
+  <div class="field"><label id="loc-label">Location (City)*</label>
+    <input role="combobox" aria-labelledby="loc-label" id="location" data-options="San Jose, California, United States,San Jose, Costa Rica">
+  </div>
+  <div class="field"><label id="age-label">Are you at least 18 years of age?*</label>
+    <input role="combobox" aria-labelledby="age-label" id="age" data-options="Yes,No">
+  </div>
+  <div class="field"><label id="auth-label">Are you legally authorized to work in the country where this position is located?*</label>
+    <input role="combobox" aria-labelledby="auth-label" id="auth" data-options="Yes,No">
+  </div>
+  <div class="field"><label id="prev-label">Have you previously been employed by Acme in any capacity?*</label>
+    <input role="combobox" aria-labelledby="prev-label" id="prev" data-variant="classic" data-options="Yes,No">
+  </div>
+  <div class="field"><label id="gov-label">Are you a current government official or were you a government official in the last five years?*</label>
+    <input role="combobox" aria-labelledby="gov-label" id="gov" data-options="Yes,No">
+  </div>
+  <div class="field"><label id="ai-label">Which of the following best describes how you use AI tools today?*</label>
+    <input role="combobox" aria-labelledby="ai-label" id="ai" data-variant="classic" data-options="I don't use them,Occasionally for help,Daily as part of my workflow">
+  </div>
+  <div class="field"><label id="vet-label">Veteran Status</label>
+    <input role="combobox" readonly aria-labelledby="vet-label" id="vet" data-options="I am not a protected veteran,I identify as one or more of the classifications of a protected veteran,I don't wish to answer">
+  </div>
+  <div class="field"><label id="priv-label">Please confirm receipt of the above linked Global Data Privacy Notice.*</label>
+    <input role="combobox" aria-labelledby="priv-label" id="priv" data-options="Yes,No">
+  </div>
+  <button type="submit">Submit application</button>
+</form>
+<div id="menu" role="listbox" style="position:absolute;background:#fff;border:1px solid #ccc"></div>
+<script>
+  window.__submitAttempts = 0;
+  document.getElementById("app").addEventListener("submit", e => { e.preventDefault(); window.__submitAttempts++; });
+  const menu = document.getElementById("menu");
+  document.querySelectorAll("[role=combobox]").forEach(cb => {
+    const all = cb.dataset.options.split(/,(?! )/);
+    const show = () => {
+      if (cb.dataset.delay) {                       // like a database search: results arrive later
+        menu.innerHTML = "<div role='option'>Loading...</div>";
+        clearTimeout(cb._t);
+        cb._t = setTimeout(render, +cb.dataset.delay);
+        return;
+      }
+      render();
+    };
+    const render = () => {
+      menu.innerHTML = "";
+      if (cb.dataset.search && !cb.value.toLowerCase().includes(cb.dataset.search)) return;  // server only matches "berkeley"
+      if (cb.dataset.min && cb.value.length < +cb.dataset.min) return;                       // search-as-you-type list
+      const q = cb.value.toLowerCase().split(",")[0].trim();
+      all.filter(o => o.toLowerCase().includes(q.slice(0, 8))).forEach((o, i) => {
+        const d = document.createElement("div"); d.textContent = o;
+        if (cb.dataset.variant === "classic") { d.className = "select__option"; d.id = "react-select-7-option-" + i; }
+        else d.setAttribute("role", "option");
+        d.onclick = () => { cb.value = o; cb.dataset.chosen = o; menu.innerHTML = ""; };
+        menu.appendChild(d);
+      });
+    };
+    cb.addEventListener("input", show); cb.addEventListener("focus", show);
+  });
+</script>
+</body></html>

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>Companies <span class="count">{{ boards|length }} searched every time you click "Find new jobs"</span></h2>
+  <table>
+    <tr><th>Company</th><th>Source</th><th>Saved matches</th><th></th></tr>
+    {% for key, company in boards.items() %}
+    <tr>
+      <td><a href="/company/{{ key|urlencode }}"><b>{{ company }}</b></a></td>
+      <td class="muted">{{ source_label(key) }}</td>
+      <td>{{ counts.get(company.lower(), 0) }}</td>
+      <td>
+        <div class="actions">
+          <a class="button-link" href="/company/{{ key|urlencode }}">See open roles</a>
+          <form method="post" action="/boards/remove" class="inline">
+            <input type="hidden" name="token" value="{{ key }}">
+            <button type="submit" class="secondary">Remove</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</section>
+
+<section>
+  <h2>Add a company</h2>
+  <p>Easiest: open any job posting from the company and <b>paste its link</b>. Greenhouse, Lever, and Ashby links are recognized automatically.</p>
+  <form method="post" action="/boards" class="inline">
+    <input type="text" name="token" placeholder="paste a job link, or type a board name" required style="min-width:340px" aria-label="Job link or board name">
+    <input type="text" name="company" placeholder="Company name (optional)" aria-label="Company name">
+    <select name="source" aria-label="Job board type" title="Only used when you type a name instead of a link">
+      <option value="greenhouse">Greenhouse</option>
+      <option value="lever">Lever</option>
+      <option value="ashby">Ashby</option>
+    </select>
+    <button type="submit">Add company</button>
+  </form>
+  <table style="margin-top:12px">
+    <tr><th>If the job link looks like</th><th>It's on</th><th>Example</th></tr>
+    <tr><td><code>boards.greenhouse.io/<b>NAME</b></code> or <code>job-boards.greenhouse.io/<b>NAME</b></code></td><td>Greenhouse</td><td class="muted">Cloudflare, Coinbase</td></tr>
+    <tr><td><code>jobs.lever.co/<b>NAME</b></code></td><td>Lever</td><td class="muted">many startups</td></tr>
+    <tr><td><code>jobs.ashbyhq.com/<b>NAME</b></code></td><td>Ashby</td><td class="muted">OpenAI → <code>openai</code></td></tr>
+  </table>
+  <p class="muted">Companies on their own career sites (Workday, iCIMS, etc.) don't offer a public feed, so they can't be added yet.</p>
+</section>
+
+<section>
+  <h2>Government jobs (USAJOBS) <span class="count">federal IT, cyber, and networking roles, with real application deadlines</span></h2>
+  {% if usajobs_ready %}
+  <p>Add a search; each one is a keyword, and its results are refreshed with everything else.</p>
+  <form method="post" action="/boards" class="inline">
+    <input type="hidden" name="source" value="usajobs">
+    <input type="text" name="token" placeholder="keyword, e.g. it-specialist or cybersecurity" required style="min-width:340px" aria-label="USAJOBS keyword">
+    <button type="submit">Add search</button>
+  </form>
+  <p class="muted">Use dashes instead of spaces: <code>it-specialist</code> searches "it specialist".</p>
+  {% else %}
+  <p><b>Needs a free API key (one-time setup):</b></p>
+  <ol>
+    <li>Request a key at <a href="https://developer.usajobs.gov/apirequest/" target="_blank" rel="noopener noreferrer">developer.usajobs.gov/apirequest</a>. It arrives by email.</li>
+    <li>Add two lines to the <code>.env</code> file in your project folder:<br>
+      <code>USAJOBS_API_KEY=your-key</code><br><code>USAJOBS_EMAIL=the-email-you-used</code></li>
+    <li>Restart the dashboard. This box turns into a search form.</li>
+  </ol>
+  {% endif %}
+</section>
+{% endblock %}

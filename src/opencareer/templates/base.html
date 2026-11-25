@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenCareer Agent</title>
+  <style>
+    :root { --ink:#1f2328; --muted:#656d76; --line:#d0d7de; --bg:#f6f8fa; --accent:#0969da; --good:#1a7f37; --warn:#9a6700; --bad:#cf222e; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+    header { background:#fff; border-bottom:1px solid var(--line); padding:14px 28px; display:flex; align-items:center; gap:16px; }
+    header h1 { font-size:18px; margin:0; }
+    header h1 a { color:inherit; text-decoration:none; }
+    header nav { flex:1; display:flex; gap:4px; margin-left:18px; }
+    header nav a { color:var(--muted); text-decoration:none; padding:6px 12px; border-radius:6px; font-size:14px; }
+    header nav a:hover { background:var(--bg); color:var(--ink); }
+    header nav a.active { background:var(--bg); color:var(--ink); font-weight:600; }
+    .warn { background:#fff8c5; border:1px solid #d4a72c; border-radius:8px; padding:10px 14px; margin-bottom:18px; }
+    .ok { color:var(--good); font-weight:600; } .missing { color:var(--bad); font-weight:600; }
+    .pdf { width:100%; height:820px; border:1px solid var(--line); border-radius:8px; }
+    pre.plain { white-space:pre-wrap; font:13px/1.5 ui-monospace, Menlo, monospace; background:var(--bg); padding:12px; border-radius:8px; max-height:500px; overflow:auto; }
+    #live-banner { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 16px; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.2); display:none; gap:12px; align-items:center; z-index:10; font-size:14px; }
+    #live-banner button { background:#fff; color:var(--ink); }
+    a.pill { text-decoration:none; color:var(--ink); } a.pill:hover { border-color:var(--accent); }
+    main { max-width:1200px; margin:0 auto; padding:24px 28px 60px; }
+    section { background:#fff; border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:22px; }
+    h2 { font-size:16px; margin:0 0 12px; display:flex; align-items:baseline; gap:10px; }
+    h2 .count { color:var(--muted); font-weight:400; font-size:14px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { text-align:left; padding:8px 10px; border-top:1px solid var(--line); vertical-align:middle; }
+    th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-top:none; }
+    a { color:var(--accent); }
+    .muted { color:var(--muted); font-size:13px; }
+    .score { font-variant-numeric:tabular-nums; font-weight:600; width:48px; }
+    .tag { display:inline-block; font-size:12px; padding:1px 8px; border-radius:999px; background:#ddf4ff; color:#0550ae; }
+    .tag.cybersecurity { background:#ffebe9; color:#a40e26; }
+    .tag.networking { background:#dafbe1; color:#116329; }
+    .tag.it { background:#fff8c5; color:#7d4e00; }
+    .tag.grade { background:#eaeef2; color:#24292f; }
+    .tag.target { background:#fbefff; color:#8250df; margin-top:3px; }
+    .status { font-weight:600; }
+    .status.offer, .status.accepted { color:var(--good); }
+    .status.rejected, .status.ghosted, .status.withdrawn { color:var(--bad); }
+    .status.interview, .status.final_round, .status.recruiter_screen, .status.assessment { color:var(--warn); }
+    .message { background:#ddf4ff; border:1px solid #54aeff; border-radius:8px; padding:10px 14px; margin-bottom:18px; }
+    .pills { display:flex; flex-wrap:wrap; gap:8px; }
+    .pill { background:var(--bg); border:1px solid var(--line); border-radius:999px; padding:4px 12px; font-size:13px; }
+    .filters { display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    button, select, input { font:inherit; font-size:13px; }
+    button { background:var(--accent); color:#fff; border:none; border-radius:6px; padding:5px 12px; cursor:pointer; }
+    button.secondary { background:#fff; color:var(--ink); border:1px solid var(--line); }
+    input[type=text], input[type=number], input[type=date], select { border:1px solid var(--line); border-radius:6px; padding:4px 8px; background:#fff; }
+    input[type=number] { width:84px; }
+    td:first-child { white-space:nowrap; }
+    form.inline { display:flex; gap:6px; align-items:center; margin:0; flex-wrap:wrap; }
+    .empty { color:var(--muted); padding:8px 0; }
+    input[type=search] { border:1px solid var(--line); border-radius:6px; padding:4px 8px; }
+    .actions { display:flex; gap:6px; justify-content:flex-end; }
+    .button-link { display:inline-block; background:var(--good); color:#fff; border-radius:6px; padding:5px 12px; font-size:13px; text-decoration:none; }
+    .apply-box { border:2px solid var(--accent); border-radius:10px; padding:4px 16px 14px; margin:12px 0; background:#f6fbff; }
+    .notes { background:#fff8c5; border:1px solid #d4a72c; border-radius:8px; padding:4px 16px; }
+    .doc { border:1px solid var(--line); border-radius:8px; padding:8px 24px; max-height:520px; overflow:auto; }
+    .doc h1 { font-size:20px; } .doc h2 { font-size:15px; border-bottom:1px solid var(--line); padding-bottom:2px; }
+    textarea { width:100%; min-height:360px; font:13px/1.45 ui-monospace, Menlo, monospace; border:1px solid var(--line); border-radius:8px; padding:10px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+    @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body data-version="{{ version or '' }}">
+  <header>
+    <h1><a href="/">OpenCareer Agent</a></h1>
+    <nav>
+      <a href="/" class="{{ 'active' if nav == '/' }}">Dashboard</a>
+      <a href="/companies" class="{{ 'active' if nav.startswith('/compan') }}">Companies</a>
+      <a href="/resumes" class="{{ 'active' if nav.startswith('/resumes') }}">Resumes</a>
+      <a href="/profile" class="{{ 'active' if nav == '/profile' }}">Profile</a>
+      <a href="/github" class="{{ 'active' if nav.startswith('/github') }}">GitHub</a>
+    </nav>
+    <form method="post" action="/refresh" class="inline">
+      <button type="submit" title="Fetch the latest postings from every company board">Find new jobs</button>
+    </form>
+  </header>
+  <main>
+    {% if message %}<div class="message">{{ message }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <div id="live-banner" role="status">This page has new changes. <button type="button" onclick="location.reload()">Refresh</button></div>
+  <script>
+  // Live refresh: every 3 seconds, ask the server if anything changed (your profile,
+  // resumes, drafts, or saved jobs). If so, reload the page, unless you're in the
+  // middle of typing, in which case show a "Refresh" button instead of losing your edits.
+  (function () {
+    const start = document.body.dataset.version;
+    if (!start) return;
+    let typing = false, submitting = false;
+    document.addEventListener("input", () => { typing = true; });
+    document.addEventListener("submit", () => { submitting = true; });
+    async function check() {
+      if (submitting || document.hidden) return;
+      try {
+        const reply = await fetch("/api/version", { cache: "no-store" });
+        const { version } = await reply.json();
+        if (version === start) return;
+        if (typing) {
+          document.getElementById("live-banner").style.display = "flex";
+        } else {
+          location.reload();
+        }
+      } catch (e) { /* server restarting: try again next time */ }
+    }
+    setInterval(check, 3000);
+  })();
+  </script>
+</body>
+</html>

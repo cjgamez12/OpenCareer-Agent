@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+{% if text is none %}
+<section>
+  <h2>Set up your profile</h2>
+  <p>Tailoring only uses facts from your profile and your resumes, so it can't invent anything. Pick one way to start:</p>
+  <div class="grid">
+    <div>
+      <h3 style="font-size:15px">1. Build it from your resumes with AI</h3>
+      <p class="muted">Reads the {{ resume_count }} resume file(s) in your profile folder and drafts the profile for you to check. Nothing is saved until you click Save. Costs a few cents.</p>
+      <form method="post" action="/profile/build" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Reading your resumes… ~1 min';">
+        <button type="submit" {% if not resume_count %}disabled{% endif %}>Build from my resumes</button>
+      </form>
+      {% if not resume_count %}<p class="missing">Add your resume PDFs to the profile folder first.</p>{% endif %}
+    </div>
+    <div>
+      <h3 style="font-size:15px">2. Paste or type it yourself</h3>
+      <p class="muted">Paste the profile.yaml from our chat, or start from a blank template.</p>
+      <a class="button-link" href="/profile?start=template" style="background:var(--accent)">Open blank template</a>
+    </div>
+  </div>
+  <p class="muted">Profile folder: {{ folder }}</p>
+</section>
+{% else %}
+
+{% if source == "ai" %}<div class="warn"><b>AI draft, not saved yet.</b> Check every line, fix each <code>TODO</code>, then click Save.</div>{% endif %}
+{% if source == "template" %}<div class="warn"><b>Blank template.</b> Fill it in, or paste in the profile.yaml from our chat, then click Save.</div>{% endif %}
+{% if error %}<div class="warn"><b>Problem:</b> {{ error }}</div>{% endif %}
+
+{% if summary %}
+<section>
+  <h2>{{ summary.get("name") or "Your profile" }}
+    <span class="count">{{ (summary.get("education") or {}).get("degree", "") }}{% if (summary.get("education") or {}).get("school") %}, {{ summary["education"]["school"] }}{% endif %}</span></h2>
+  <div class="grid">
+    <div>
+      <p><b>Experience:</b> {{ (summary.get("experience") or [])|length }} roles ·
+         <b>Projects:</b> {{ (summary.get("projects") or [])|length }}</p>
+      {% set prefs = summary.get("preferences") or {} %}
+      <p><b>Relocate:</b> {{ "not set" if prefs.get("willing_to_relocate") is none else ("yes" if prefs.get("willing_to_relocate") else "no") }} ·
+         <b>Needs sponsorship:</b> {{ "not set" if prefs.get("needs_sponsorship") is none else ("yes" if prefs.get("needs_sponsorship") else "no") }}</p>
+      {% if "TODO" in text %}<p class="missing">{{ text.count("TODO") }} TODO(s) left to fill in.</p>{% endif %}
+    </div>
+    <div>
+      <p><b>Starting resume for each kind of job</b></p>
+      <table>
+        {% for category, info in resume_status.items() %}
+        <tr><td>{{ category }}</td>
+          <td>{% if info.found %}<span class="ok">✓</span> {{ info.found }}{% elif info.name %}<span class="missing">✗ not found:</span> {{ info.name }}{% else %}<span class="muted">none set</span>{% endif %}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section>
+  <h2>Edit profile <span class="count">profile.yaml · indentation matters: use spaces, not tabs</span></h2>
+  <form method="post" action="/profile">
+    <textarea name="text" style="min-height:560px" spellcheck="false">{{ text }}</textarea>
+    <p><button type="submit">Save profile</button>
+      {% if source != "saved" %}<a href="/profile" style="margin-left:10px">Cancel</a>{% endif %}</p>
+  </form>
+  {% if source == "saved" %}
+  <form method="post" action="/profile/build" class="inline" onsubmit="if(!confirm('Build a new draft from your resumes? Your saved profile stays until you click Save.')) return false; const b=this.querySelector('button'); b.disabled=true; b.textContent='Reading your resumes… ~1 min';">
+    <button type="submit" class="secondary">Rebuild draft from my resumes (AI)</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

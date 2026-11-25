@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>Your resumes <span class="count">{{ rows|length }} in {{ folder }}</span></h2>
+  {% if rows %}
+  <table>
+    <tr><th>File</th><th>Used for</th><th>AI suggestions</th><th></th></tr>
+    {% for r in rows %}
+    <tr>
+      <td><a href="/resumes/view?name={{ r.name|urlencode }}"><b>{{ r.name }}</b></a> <span class="muted">· {{ r.kb }} KB</span></td>
+      <td>{% for u in r.uses %}<span class="tag {{ u }}">{{ u }}</span> {% else %}<span class="muted">-</span>{% endfor %}</td>
+      <td>{% if r.has_feedback %}<span class="ok">ready</span>{% else %}<span class="muted">not yet</span>{% endif %}</td>
+      <td><div class="actions">
+        <a class="button-link" href="/resumes/view?name={{ r.name|urlencode }}">Open</a>
+        <a href="/resumes/file?name={{ r.name|urlencode }}" target="_blank">PDF</a>
+      </div></td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted">"Used for" comes from base_resumes on the <a href="/profile">Profile page</a>. To add or replace a resume, put the file in the profile folder and refresh this page.</p>
+  {% else %}<p class="empty">No resumes yet. Put your PDF files in {{ folder }} and refresh.</p>{% endif %}
+</section>
+{% endblock %}

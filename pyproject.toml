@@ -1,0 +1,12 @@
+[project]
+name = "opencareer"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["requests", "fastapi", "uvicorn", "jinja2", "python-multipart", "anthropic", "pyyaml", "pypdf", "markdown", "python-dotenv", "playwright"]
+
+[project.optional-dependencies]
+dev = ["pytest", "httpx"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

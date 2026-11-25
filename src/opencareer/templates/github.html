@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>Your GitHub projects {% if username %}<span class="count">github.com/{{ username }}</span>{% endif %}</h2>
+  {% if not has_profile %}
+    <p class="missing">Set up your <a href="/profile">profile</a> first.</p>
+  {% elif not username %}
+    <p class="missing">Add your GitHub link to your profile first, under <code>links:</code> → <code>github:</code>.</p>
+  {% else %}
+    <p>Reads your <b>public</b> repos. Claude drafts resume project entries using only what each repo shows
+       (README, description, languages). Nothing goes into your profile until you check the draft and click <b>Add</b>.
+       Once added, tailored resumes can use them.</p>
+    <form method="post" action="/github/refresh" class="inline"
+          onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Checking GitHub…';">
+      <button type="submit">{{ "Check GitHub again" if repos else "Check my GitHub" }}</button>
+      <span class="muted">Forks are skipped: they're other people's code.</span>
+    </form>
+  {% endif %}
+</section>
+
+{% if repos %}
+<section>
+  <h2>Repos <span class="count">{{ repos|length }} public · {{ repos|rejectattr("in_profile")|list|length }} not in your profile</span></h2>
+  <form method="post" action="/github/draft"
+        onsubmit="const b=this.querySelector('button[type=submit]'); b.disabled=true; b.textContent='Reading READMEs and drafting… ~30 sec';">
+    <table>
+      <tr><th></th><th>Repo</th><th>Language</th><th>Last update</th><th>In your profile?</th></tr>
+      {% for repo in repos %}
+      <tr>
+        <td><input type="checkbox" name="repo" value="{{ repo.name }}" {% if not repo.in_profile and loop.index <= max_selected %}checked{% endif %}></td>
+        <td><a href="{{ repo.url|safe_url }}" target="_blank" rel="noopener noreferrer"><b>{{ repo.name }}</b></a>
+            {% if repo.description %}<div class="muted">{{ repo.description }}</div>{% endif %}</td>
+        <td>{{ repo.language or "—" }}</td>
+        <td>{{ repo.pushed_at }}</td>
+        <td>{% if repo.in_profile %}<span class="ok">✓ yes</span>{% else %}<span class="tag">new</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <p><button type="submit">Draft resume entries for the checked repos</button>
+       <span class="muted">Up to {{ max_selected }} at a time. Costs a few cents.</span></p>
+  </form>
+</section>
+{% endif %}
+
+{% if draft %}
+<section id="draft">
+  <h2>Draft project entries <span class="count">not saved yet</span></h2>
+  {% if draft.yaml %}
+    <div class="warn"><b>Check every line.</b> These go on resumes under your name, so each bullet must be true
+      and something you can explain in an interview. Delete anything that's off.</div>
+    <form method="post" action="/github/add">
+      <textarea name="text" rows="{{ [draft.yaml.count('\n') + 3, 30]|min }}" style="width:100%;font:13px/1.5 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:8px;padding:10px">{{ draft.yaml }}</textarea>
+      <p class="inline" style="display:flex;gap:8px">
+        <button type="submit">Add to my profile</button>
+      </p>
+    </form>
+  {% else %}
+    <p>No new projects to add.</p>
+  {% endif %}
+  {% if draft.updates %}
+    <p><b>Ideas for projects already in your profile</b> <span class="muted">(edit those on the <a href="/profile">Profile</a> page)</span></p>
+    <ul>{% for u in draft.updates %}<li><b>{{ u.project }}</b>: {{ u.suggestion }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if draft.skipped %}
+    <p><b>Skipped</b></p>
+    <ul class="muted">{% for s in draft.skipped %}<li>{{ s.repo }}: {{ s.reason }}</li>{% endfor %}</ul>
+  {% endif %}
+  <form method="post" action="/github/discard"><button type="submit" class="secondary">Discard draft</button></form>
+</section>
+{% endif %}
+{% endblock %}

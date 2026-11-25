@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.db
+.env
+profile/
+applications/
+.DS_Store
+autopilot.log
+profile.yaml
