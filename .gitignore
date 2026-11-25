@@ -7,3 +7,4 @@ applications/
 .DS_Store
 autopilot.log
 profile.yaml
+radar.log
