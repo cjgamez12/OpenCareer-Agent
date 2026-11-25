@@ -90,7 +90,7 @@
       <td>{{ app.applied_on }}</td>
       <td>
         {% if app.job %}<a href="{{ app.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ app.job.title }}</a>
-        <div class="muted">{{ app.job.company }}{% if app.job.location %} · {{ app.job.location }}{% endif %}</div>
+        <div class="muted">{{ app.job.company }}{% if app.job.location %} · {{ app.job.location }}{% endif %}{% if app.url in closed %} · <span class="tag" style="background:#eaeef2;color:#57606a" title="The company took this posting down: often it means the role was filled">posting closed</span>{% endif %}</div>
         {% else %}<a href="{{ app.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ app.url }}</a>{% endif %}
       </td>
       <td class="status {{ app.status }}">{{ app.status.replace('_', ' ') }}</td>
@@ -121,6 +121,15 @@
       <button type="submit" class="secondary" title="On: new-grad and early-career roles rank higher, internships lower">{{ "Turn off" if new_grad else "Turn on" }}</button>
     </form>
   </h2>
+  <div class="filters" style="margin-top:-4px">
+    <span class="muted">Job radar:
+      {% if radar_on %}<b class="ok">on</b>, checks every company every 30 minutes and notifies you about new matches{% else %}<b>off</b>: turn it on to hear about new jobs within 30 minutes and hide jobs that close{% endif %}{% if radar_last %} · last check {{ radar_last.ran_at.replace("T", " ")[:16] }}: {{ radar_last.new|length }} new, {{ radar_last.closed|length }} closed{% endif %}.
+    </span>
+    <form method="post" action="/radar/schedule" class="inline">
+      <input type="hidden" name="on" value="{{ '0' if radar_on else '1' }}">
+      <button type="submit" class="{{ 'secondary' if radar_on else '' }}">{{ "Turn off radar" if radar_on else "Turn on job radar" }}</button>
+    </form>
+  </div>
   <form method="get" action="/" class="filters">
     <input type="search" name="q" value="{{ q }}" placeholder="Search title, company, or location" aria-label="Search" style="min-width:280px">
     <select name="category" aria-label="Category">
@@ -138,7 +147,7 @@
     {% for score, job in ranked %}
     <tr>
       <td class="score">{{ score }}</td>
-      <td><a href="{{ job.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ job.title }}</a>
+      <td><a href="{{ job.url|safe_url }}" target="_blank" rel="noopener noreferrer">{{ job.title }}</a>{% if job.url in fresh %} <span class="tag" style="background:#dafbe1;color:#116329">new</span>{% endif %}
         <div class="muted">{{ job.company }}{% if job.deadline %} · deadline {{ job.deadline }}{% endif %}</div></td>
       <td><span class="tag {{ job.tags[0] }}">{{ job.tags[0] }}</span>{% if grade_of(job) %} <span class="tag grade">{{ grade_of(job) }}</span>{% endif %}{% if recent_grads(job) %} <span class="tag target">Recent Graduates</span>{% endif %}</td>
       <td class="muted">{{ job.location or "" }}{% if job.url in target_of %}<div><span class="tag target">★ {{ target_of[job.url] }}</span></div>{% endif %}</td>

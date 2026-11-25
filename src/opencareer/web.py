@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
-from opencareer import applicant, autopilot, finder, github, journey, locations, pipeline, settings, storage, tailor, tracker
+from opencareer import applicant, autopilot, finder, github, journey, locations, pipeline, radar, settings, storage, tailor, tracker
 from opencareer import apply as assisted_apply
 from opencareer import boards as board_registry
 from opencareer.ai import AIError
@@ -201,6 +201,8 @@ def create_app(db_path: str | None = None, boards: dict | None = None,
             "categories": CATEGORIES, "category": category, "hide_interns": hide_interns,
             "only_targets": only_targets, "targets": targets, "target_of": target_of, "q": q,
             "stages": tracker.STAGES, "journey_svg": journey_svg, "journey_headline": journey.headline(links),
+            "fresh": radar.new_urls(conn), "closed": radar.closed_urls(conn),
+            "radar_on": radar.is_on(schedule_home), "radar_last": radar.last_run(conn),
             "boards": board_registry.all_boards(conn, default_boards),
             "has_profile": applicant.read_profile_text(profile_dir) is not None,
             "new_grad": new_grad,
@@ -229,6 +231,15 @@ def create_app(db_path: str | None = None, boards: dict | None = None,
         launch_autopilot()
         return _back("Autopilot is running in the background (a few minutes). "
                      "This page updates by itself when drafts are ready.")
+
+    @app.post("/radar/schedule")
+    def radar_schedule(on: str = Form(...)):
+        if on != "1":
+            radar.uninstall(home=schedule_home, runner=launchctl)
+            return _back("Job radar is off.")
+        radar.install(home=schedule_home, runner=launchctl)
+        return _back("Job radar is on: every 30 minutes it checks every company you follow, notifies you about "
+                     "new matches, and hides jobs that close. It never applies for you.")
 
     @app.post("/settings/new-grad")
     def toggle_new_grad(on: str = Form(...), conn=Depends(get_conn)):
@@ -261,6 +272,8 @@ def create_app(db_path: str | None = None, boards: dict | None = None,
     def refresh(conn=Depends(get_conn)):
         stats = pipeline.run(conn, board_registry.all_boards(conn, default_boards))
         text = f"Checked {stats['fetched']} jobs, {stats['selected']} matched, {stats['new']} new."
+        if stats["closed_urls"]:
+            text += f" {len(stats['closed_urls'])} closed (taken down by the company), now hidden."
         if stats["errors"]:
             text += (f" Could not reach: {', '.join(stats['errors'])}. "
                      "Remove it on the Companies page if it isn't a Greenhouse board.")

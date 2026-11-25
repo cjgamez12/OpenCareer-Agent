@@ -7,7 +7,7 @@ import re
 import requests
 
 from opencareer import boards as board_registry
-from opencareer import locations, ranking, storage, tracker
+from opencareer import locations, radar, ranking, storage, tracker
 from opencareer.filters import EXCLUDE_WORDS, _has_word, classify_category, is_entry_level
 from opencareer.models import JobPosting
 from opencareer.sources import greenhouse, registry
@@ -125,7 +125,7 @@ def fetch_board(conn, board: str, company: str) -> tuple[list[JobPosting], list[
 
 def run(conn, boards: dict[str, str]) -> dict:
     """Fetch every board, keep the jobs we want, save them. Return counts."""
-    stats = {"fetched": 0, "selected": 0, "new": 0, "errors": []}
+    stats = {"fetched": 0, "selected": 0, "new": 0, "errors": [], "new_urls": [], "closed_urls": []}
     for board, company in boards.items():
         try:
             jobs, chosen, new = fetch_board(conn, board, company)
@@ -135,6 +135,11 @@ def run(conn, boards: dict[str, str]) -> dict:
         stats["fetched"] += len(jobs)
         stats["selected"] += len(chosen)
         stats["new"] += new
+        # USAJOBS boards are keyword searches, not full lists, so a missing job there isn't "closed"
+        full_list = registry.split_key(board)[0] != "usajobs"
+        seen = radar.observe(conn, board, {j.url for j in jobs} if full_list else None, [j.url for j in chosen])
+        stats["new_urls"] += seen["new"]
+        stats["closed_urls"] += seen["closed"]
     return stats
 
 
@@ -171,8 +176,8 @@ def rank_with_targets(jobs: list[JobPosting], today: date, targets=None,
 def shortlist(conn, today: date, limit: int = 25, targets=None,
               new_grad: bool = False) -> list[tuple[int, JobPosting]]:
     """Current filters, minus jobs already applied to, ranked best first."""
-    applied = tracker.applied_urls(conn)
-    current = [job for job in select_jobs(storage.load_jobs(conn)) if job.url not in applied]
+    hidden = tracker.applied_urls(conn) | radar.closed_urls(conn)      # applied, or no longer posted
+    current = [job for job in select_jobs(storage.load_jobs(conn)) if job.url not in hidden]
     return rank_with_targets(current, today, targets, new_grad)[:limit]
 
 

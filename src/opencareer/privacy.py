@@ -14,8 +14,8 @@ import sys
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parents[2]
-PRIVATE = ["profile/", "applications/", "*.db", ".env", "autopilot.log", "profile.yaml"]
-PRIVATE_PATHS = ("profile/", "applications/", ".env", "jobs.db", "autopilot.log")
+PRIVATE = ["profile/", "applications/", "*.db", ".env", "autopilot.log", "radar.log", "profile.yaml"]
+PRIVATE_PATHS = ("profile/", "applications/", ".env", "jobs.db", "autopilot.log", "radar.log")
 
 
 def _git(*args: str, cwd: Path) -> str:

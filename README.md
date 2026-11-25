@@ -24,6 +24,7 @@ Built in Python with FastAPI, SQLite, Playwright and the Anthropic API.
 | **Tailors** | Claude rewrites your best-matching resume and writes a cover letter for the specific posting, using only facts from your profile and resumes. It also adds notes on anything you should double-check. |
 | **Uses your GitHub** | Reads your public repos and drafts resume project entries from what each repo actually shows. You edit them, and they're added to your profile only when you approve. |
 | **Pre-fills applications** | Opens the real form in Chrome, fills what it's sure of, uploads your PDFs, and highlights what's left for you. |
+| **Job radar** | Optional check of every company's board every 30 minutes: a Mac notification for new matches, a **new** badge on fresh jobs, and jobs that close are hidden (and marked **posting closed** on your applications). |
 | **Autopilot** | Optional daily run that finds new jobs, tailors the top few, and sends you a Mac notification. It never applies. |
 
 ---
@@ -174,6 +175,18 @@ A typical run:
 2. **Tailor**, and read every line of the resume, cover letter and notes.
 3. **Prepare application**, then check the form in Chrome, finish the yellow fields, and click Submit.
 
+### Job radar (optional)
+
+Click **Turn on job radar** above Top matches, or use the terminal:
+
+```
+PYTHONPATH=src python -m opencareer.radar --install
+PYTHONPATH=src python -m opencareer.radar --uninstall
+PYTHONPATH=src python -m opencareer.radar
+```
+
+These turn on the 30-minute checks, turn them off, and run one check now. A job counts as closed once it's missing from its company's board two checks in a row. If it comes back, it reopens. The first check of each company sets a baseline, so you don't get a flood of "new" jobs.
+
 ### Autopilot (optional)
 
 Turn it on from the dashboard, or from the terminal:
@@ -193,7 +206,7 @@ These turn on the daily run (here at 12:00), turn it off, and run it once now. E
 Your data stays on your computer.
 
 - **Local only.** The dashboard only listens on `127.0.0.1`, so other devices, even on your Wi-Fi, can't open it.
-- **Kept out of git.** `.gitignore` covers `profile/`, `profile.yaml`, `applications/`, `*.db`, `.env` and `autopilot.log`.
+- **Kept out of git.** `.gitignore` covers `profile/`, `profile.yaml`, `applications/`, `*.db`, `.env`, `autopilot.log` and `radar.log`.
 - **What Claude sees:**
   - for tailoring: your resume facts (education, experience, projects, skills) and the contact details that go on a resume;
   - for a dropdown: the question, its choices, your resume facts, the names of your target locations, and your own saved answer to that same question if you have one (like how you heard about the job), so it can match the company's wording. No name or contact info.
@@ -307,6 +320,7 @@ src/opencareer/
   apply.py         assisted apply: read the form, fill, highlight, remember, never submit
   ai.py            the one place that calls Claude
   autopilot.py     daily run and macOS schedule
+  radar.py         30-minute checks: new jobs, closed jobs, notifications
   privacy.py       privacy check and commit guard
   publish.py       clean public copy
   web.py           the dashboard (FastAPI)
